@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Timer from './Components/timer.js';
 import Ths from 'thesaurus';
@@ -39,10 +38,10 @@ class App extends Component {
 
   static defaultProps = {
       questions: [
-        (<img src="http://freevector.co/wp-content/uploads/2009/06/29942-triangular-silhouette-shapes.png" width="30%" height="30%"/>),
-        (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="30%" height="30%"/>),
-        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="30%" height="30%"/>),
-        (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="30%" height="30%"/>)
+        (<img src="http://freevector.co/wp-content/uploads/2009/06/29942-triangular-silhouette-shapes.png" width="30%" height="30%" alt="Image 1"/>),
+        (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="30%" height="30%" alt="Image 2"/>),
+        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="30%" height="30%" alt="Image 3"/>),
+        (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="30%" height="30%" alt="Image 4"/>)
       ]
   }
   handleTime(){
@@ -98,11 +97,10 @@ class App extends Component {
 
   checkSynonyms(answer){
     let synonyms = Ths.find(answer.toLowerCase());
-    console.log(synonyms);
     for(var i = 0; i < this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]].length; i++){
       if(this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]][i] !== undefined){
         for(var g = 0; g < synonyms.length; g++){
-            if(this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]][i].toLowerCase() == synonyms[g].toLowerCase()) return false;
+            if(this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]][i].toLowerCase() === synonyms[g].toLowerCase()) return false;
         }
       }
     }
@@ -113,7 +111,7 @@ class App extends Component {
     let answers = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
     for(var i = 0; i < this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]].length; i++){
       if(answers[i] !== undefined){
-        if(answer.toLowerCase() == answers[i].toLowerCase()) return false;
+        if(answer.toLowerCase() === answers[i].toLowerCase()) return false;
       }
     }
     return true;
@@ -146,7 +144,6 @@ class App extends Component {
 
   render() {
     let startUp = (
-      <body>
         <div className="App" id="startUp">
           <div className="container" id="page-wrap">
             <h1>Welcome!</h1>
@@ -154,13 +151,12 @@ class App extends Component {
             <button type="button" className="btn btn-warning" onClick={this.clicked2.bind(this)}>Click to begin</button>
           </div>
         </div>
-      </body>
     );
 
     let answersArray = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
 
     const listItems = answersArray.map((answer) => {
-      if(answer != "empty") return(<li>{answer}</li>);
+      if(answer !== "empty") return(<li>{answer}</li>);
     });
 
     let questionArray = this.props.questions;
@@ -169,7 +165,7 @@ class App extends Component {
 
     for(var i = 0; i < questionArray.length; i++){
       allAnswers[i] = this.state.answers[Object.keys(this.state.answers)[i]].map((answer) => {
-        if(answer != "empty") return(<li>{answer}</li>);
+        if(answer !== "empty") return(<li>{answer}</li>);
       });
     }
 
@@ -202,7 +198,7 @@ class App extends Component {
 
     for(var i = 0; i < Object.keys(this.state.answers).length; i++){
       for(var g = 0; g < this.state.answers[Object.keys(this.state.answers)[i]].length; g++){
-        if(this.state.answers[Object.keys(this.state.answers)[i]][g] != "empty" && this.state.answers[Object.keys(this.state.answers)[i]][g] !== undefined) answerNum++;
+        if(this.state.answers[Object.keys(this.state.answers)[i]][g] !== "empty" && this.state.answers[Object.keys(this.state.answers)[i]][g] !== undefined) answerNum++;
       }
     }
 
@@ -251,9 +247,9 @@ class App extends Component {
           </ol>
       </div>
     );
-    if(this.state.drawing == 0) return startUp;
-    else if(this.state.drawing == 1) return started;
-    else if(this.state.drawing == 2) return ending;
+    if(this.state.drawing === 0) return startUp;
+    else if(this.state.drawing === 1) return started;
+    else if(this.state.drawing === 2) return ending;
     else return(<div>Error!</div>);
   }
 

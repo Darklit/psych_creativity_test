@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Timer from './Components/timer.js';
+import Ths from 'thesaurus';
 
 class App extends Component {
   constructor(props){
@@ -32,13 +33,16 @@ class App extends Component {
     }
     //this.clicked = this.clicked.bind(this);
     this.handleTime = this.handleTime.bind(this);
+    this.checkSynonyms = this.checkSynonyms.bind(this);
+    this.checkDuplicates = this.checkDuplicates.bind(this);
   }
 
   static defaultProps = {
       questions: [
         (<img src="http://freevector.co/wp-content/uploads/2009/06/29942-triangular-silhouette-shapes.png" width="30%" height="30%"/>),
         (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="30%" height="30%"/>),
-        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="30%" height="30%"/>)
+        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="30%" height="30%"/>),
+        (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="30%" height="30%"/>)
       ]
   }
   handleTime(){
@@ -92,13 +96,37 @@ class App extends Component {
     this.setState({drawing: 1});
   }
 
+  checkSynonyms(answer){
+    let synonyms = Ths.find(answer.toLowerCase());
+    console.log(synonyms);
+    for(var i = 0; i < this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]].length; i++){
+      if(this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]][i] !== undefined){
+        for(var g = 0; g < synonyms.length; g++){
+            if(this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]][i].toLowerCase() == synonyms[g].toLowerCase()) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  checkDuplicates(answer){
+    let answers = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
+    for(var i = 0; i < this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]].length; i++){
+      if(answers[i] !== undefined){
+        if(answer.toLowerCase() == answers[i].toLowerCase()) return false;
+      }
+    }
+    return true;
+  }
+
   handleAnswer(answer){
     const data = this.refs.example.value;
     answer.preventDefault();
     let answers = this.state.answers;
     for(var i = 0; i < Object.keys(answers).length; i++){
       if(i == this.state.answerIndex){
-        answers[Object.keys(answers)[i]][this.state.answers2] = data;
+        if(this.checkSynonyms(data) && this.checkDuplicates(data)) answers[Object.keys(answers)[i]][this.state.answers2] = data;
+        else alert("Too similar to one of your other answers!");
         this.setState({
           answers2: this.state.answers2+1
         });
@@ -108,7 +136,12 @@ class App extends Component {
     this.setState({
       answers: answers
     });
-    console.log(this.state.answers);
+  }
+
+  skipMinute(){
+    this.setState({
+      seconds: 0
+    });
   }
 
   render() {
@@ -140,22 +173,65 @@ class App extends Component {
       });
     }
 
-    let drawAns = allAnswers.map((answer) => {
-      <div className="col-sm">
-        {answer}
-      </div>
+    let drawAns1 = allAnswers.map((answer,i) => {
+      if(i<=2)return(<div className="col-sm">
+          {this.props.questions[i]}
+          {answer}
+        </div>
+      );
     });
 
-    console.log(drawAns);
+    let drawAns2 = allAnswers.map((answer,i) => {
+      if(i<=5 && i>2)return(<div className="col-sm">
+          {this.props.questions[i]}
+          {answer}
+        </div>
+      );
+    });
+
+    let drawAns3 = allAnswers.map((answer,i) => {
+      if(i>5)return(
+        <div className="col-sm">
+          {this.props.questions[i]}
+          {answer}
+        </div>
+      );
+    });
+
+    let answerNum = 0;
+
+    for(var i = 0; i < Object.keys(this.state.answers).length; i++){
+      for(var g = 0; g < this.state.answers[Object.keys(this.state.answers)[i]].length; g++){
+        if(this.state.answers[Object.keys(this.state.answers)[i]][g] != "empty" && this.state.answers[Object.keys(this.state.answers)[i]][g] !== undefined) answerNum++;
+      }
+    }
+
+    let form = (
+      <form onSubmit={this.handleAnswer.bind(this)} autocomplete="off">
+      <div className="row">
+        <div className="col-sm">
+        <label htmlFor="examples">{this.props.questions[this.state.answerIndex]}</label>
+          <input ref="example" type="text" id="examples" className="form-control" onSubmit={this.handleAnswer.bind(this)}/>
+        </div>
+      </div>
+    </form>
+  );
 
     let ending = (
       <div className="App">
         <h2>Your guesses!</h2>
         <div className="container">
           <div className="row">
-            {drawAns}
+            {drawAns1}
+          </div>
+          <div className="row">
+            {drawAns2}
+          </div>
+          <div className="row">
+            {drawAns3}
           </div>
         </div>
+        <h4>Your total amount of answers: {answerNum}</h4>
       </div>
     );
 
@@ -164,17 +240,11 @@ class App extends Component {
         {this.state.clicked ? <Timer minutes={this.state.minutes} seconds={this.state.seconds} startMinutes="1" /> : <p></p>}
         <p></p>
           {!this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.clicked.bind(this)}>{this.state.buttonName}</button> : <p></p>}
+          {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button> : <p></p>}
           <p></p>
           <br/>
           <div className="container">
-            <form onSubmit={this.handleAnswer.bind(this)}>
-            <div className="row">
-              <div className="col-sm">
-              <label htmlFor="examples">{this.props.questions[this.state.answerIndex]}</label>
-                <input ref="example" type="text" id="examples" className="form-control" onSubmit={this.handleAnswer.bind(this)}/>
-              </div>
-            </div>
-          </form>
+            {this.state.clicked ? form : <p></p>}
           </div>
           <ol>
             {listItems}

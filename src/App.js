@@ -5,9 +5,9 @@ import Ths from 'thesaurus';
 import * as firebase from 'firebase';
 import config from './config.js';
 
-console.log(config);
-var app = firebase.initializeApp(config);
+firebase.initializeApp(config);
 
+var database = firebase.database();
 class App extends Component {
   constructor(props){
     super();
@@ -34,6 +34,8 @@ class App extends Component {
     this.handleTime = this.handleTime.bind(this);
     this.checkSynonyms = this.checkSynonyms.bind(this);
     this.checkDuplicates = this.checkDuplicates.bind(this);
+    this.handleAverage = this.handleAverage.bind(this);
+    this.listenData = this.listenData.bind(this);
   }
 
   static defaultProps = {
@@ -68,15 +70,18 @@ class App extends Component {
             clicked: false,
             drawing: 2
           });
-          app.database().ref('/answers').set(this.state.answers)
-          .then(function(){
-            console.log("Worked!");
-          }).catch(console.error);
+          let answers = this.state.answers;
+          this.listenData();
+          database.ref('answers').push(answers,function(e){
+            if(e) console.log("failed!");
+            else console.log("worked!");
+          });
         }else{
           this.setState({
             answerIndex: this.state.answerIndex+1,
             minutes: 2,
-            seconds: 0
+            seconds: 0,
+            answers2: 0
           });
         }
       }
@@ -155,6 +160,50 @@ class App extends Component {
     });
   }
 
+  listenData(){
+    let answersData = database.ref('answers');
+
+    answersData.on('value',(dat)=>{
+      let answersArr = [];
+      var ans = dat.val();
+      var key = Object.keys(ans);
+      for(var i = 0; i < key.length; i++){
+        answersArr[i] = ans[key[i]];
+      }
+      this.handleAverage(answersArr);
+    });
+  }
+
+  handleAverage(answersArr){
+    let totalPeople = answersArr.length;
+    let totalAnswers = 0;
+
+    let totalAnswersArr = [0,0,0,0];
+
+    //Id:, Id
+    for(var i = 0; i < answersArr.length; i++){
+      var keys = Object.keys(answersArr[i]);
+      //1:, 2:
+      for(var g = 0; g < keys.length; g++){
+        var keys2 = Object.keys(answersArr[i][keys[g]]);
+        //[answers]
+        totalAnswersArr[g]+=answersArr[i][keys[g]].length;
+        for(var q = 0; q < keys2.length; q++){
+          if(answersArr[i][keys[g]][keys2[q]] !== undefined && answersArr[i][keys[g]][keys2[q]] !== "empty"){
+             totalAnswers++;
+           }
+        }
+      }
+    }
+    this.setState({
+      averageTotal: totalAnswers/totalPeople,
+      average1: totalAnswersArr[0]/totalPeople,
+      average2: totalAnswersArr[1]/totalPeople,
+      average3: totalAnswersArr[2]/totalPeople,
+      average4: totalAnswersArr[3]/totalPeople
+    });
+  }
+
   render() {
     let startUp = (
         <div className="App" id="startUp">
@@ -183,7 +232,7 @@ class App extends Component {
     }
 
     let drawAns1 = allAnswers.map((answer,i) => {
-      if(i<=2)return(<div className="col-sm">
+      if(i<=2)return(<div className="col">
           {this.props.questions[i]}
           {answer}
         </div>
@@ -191,7 +240,7 @@ class App extends Component {
     });
 
     let drawAns2 = allAnswers.map((answer,i) => {
-      if(i<=5 && i>2)return(<div className="col-sm">
+      if(i<=5 && i>2)return(<div className="col">
           {this.props.questions[i]}
           {answer}
         </div>
@@ -215,6 +264,8 @@ class App extends Component {
       }
     }
 
+
+
     let form = (
       <form onSubmit={this.handleAnswer.bind(this)} autocomplete="off">
       <div className="row">
@@ -235,7 +286,23 @@ class App extends Component {
             {drawAns2}
           </div>
         </div>
-        <h4>Your total amount of answers: {answerNum}</h4>
+        <p>The average total answers for people was {this.state.averageTotal}. You had {answerNum} total answers!</p>
+        <div className="container">
+          <div className="row">
+            <div className="col">
+              <p>Most people had {this.state.average1} answers for Question 1</p>
+            </div>
+            <div className="col">
+              <p>Most people had {this.state.average2} answers for Question 2</p>
+            </div>
+            <div className="col">
+              <p>Most people had {this.state.average3} answers for Question 3</p>
+            </div>
+            <div className="col">
+              <p>Most people had {this.state.average4} answers for Question 4</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
 

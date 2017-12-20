@@ -7,3 +7,7 @@ body {
 #text {
   justify-content: 'left';
 }
+
+#root {
+  background-color: #6acdf4;
+}

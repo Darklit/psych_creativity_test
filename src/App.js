@@ -4,6 +4,8 @@ import Timer from './Components/timer.js';
 import Ths from 'thesaurus';
 import * as firebase from 'firebase';
 import config from './config.js';
+import plural from 'pluralize';
+import fs from 'fs';
 
 firebase.initializeApp(config);
 
@@ -36,6 +38,8 @@ class App extends Component {
     this.checkDuplicates = this.checkDuplicates.bind(this);
     this.handleAverage = this.handleAverage.bind(this);
     this.listenData = this.listenData.bind(this);
+    this.checkPlural = this.checkPlural.bind(this);
+    this.checkReal = this.checkReal.bind(this);
   }
 
   static defaultProps = {
@@ -134,14 +138,49 @@ class App extends Component {
     return true;
   }
 
+
+  checkReal(answer){
+    /*
+    let answers = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
+    let words = checkWord('en');
+
+    let answerArr = answer.split(" ");
+
+    for(var i = 0; i < answerArr.length; i++){
+      if(!words.check(answerArr[i])) return false;
+    }
+    */
+    //Broken, need new library :(
+    return true;
+  }
+
+  checkPlural(answer){
+    let answers = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
+
+    for(var i = 0; i < this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]].length; i++){
+      if(answers[i] !== undefined){
+        let singleWord1 = plural.singular(answers[i].toLowerCase());
+        let singleWord2 = plural.singular(answer.toLowerCase());
+        let pluralWord1 = plural.plural(answers[i].toLowerCase());
+        let pluralWord2 = plural.plural(answer.toLowerCase());
+        if(pluralWord1 === pluralWord2 || singleWord1 === singleWord2) return false;
+      }
+    }
+    return true;
+  }
+
   handleAnswer(answer){
     const data = this.refs.example.value;
     answer.preventDefault();
     let answers = this.state.answers;
     for(var i = 0; i < Object.keys(answers).length; i++){
       if(i == this.state.answerIndex){
-        if(this.checkSynonyms(data) && this.checkDuplicates(data)) answers[Object.keys(answers)[i]][this.state.answers2] = data;
-        else alert("Too similar to one of your other answers!");
+        if(this.checkReal(data)){
+        if(this.checkSynonyms(data) && this.checkDuplicates(data) && this.checkPlural(data)){
+            answers[Object.keys(answers)[i]][this.state.answers2] = data;
+          }
+          else alert("Too similar to one of your other answers!");
+        }else alert("These words do not exist :(");
         this.setState({
           answers2: this.state.answers2+1
         });
@@ -206,13 +245,15 @@ class App extends Component {
 
   render() {
     let startUp = (
-        <div className="App" id="startUp">
-          <div className="container" id="page-wrap">
+      <div className="App">
+        <div className="container-fluid add">
+          <div className="jumbotron">
             <h1>Welcome!</h1>
             <h5>This is the psychology creativity test! It works likes this: You have 2 minutes to come up with as many uses as you can for an abstract Object. It will cycle through 4 different objects then we will tell you your percentile against those who also took it!</h5>
             <button type="button" className="btn btn-warning" onClick={this.clicked2.bind(this)}>Click to begin</button>
           </div>
         </div>
+      </div>
     );
 
     let answersArray = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
@@ -269,6 +310,7 @@ class App extends Component {
     let form = (
       <form onSubmit={this.handleAnswer.bind(this)} autocomplete="off">
       <div className="row">
+        <h2>What can you use this for?</h2>
         <div className="col-sm">
         <label htmlFor="examples">{this.props.questions[this.state.answerIndex]}</label>
           <input ref="example" type="text" id="examples" className="form-control" onSubmit={this.handleAnswer.bind(this)}/>
@@ -279,27 +321,32 @@ class App extends Component {
 
     let ending = (
       <div className="App">
-        <h2>Your guesses!</h2>
-        <div className="container">
-          <div className="row">
-            {drawAns1}
-            {drawAns2}
-          </div>
-        </div>
-        <p>The average total answers for people was {this.state.averageTotal}. You had {answerNum} total answers!</p>
-        <div className="container">
-          <div className="row">
-            <div className="col">
-              <p>Most people had {this.state.average1} answers for Question 1</p>
+        <div className="container-fluid add">
+          <div className="jumbotron">
+            <div className="container">
+              <div className="row">
+              <h2>Your guesses!</h2>
+                {drawAns1}
+                {drawAns2}
+              </div>
+              <h2>The average total answers for people was {this.state.averageTotal}. You had {answerNum} total answers!</h2>
+              <br/>
             </div>
-            <div className="col">
-              <p>Most people had {this.state.average2} answers for Question 2</p>
-            </div>
-            <div className="col">
-              <p>Most people had {this.state.average3} answers for Question 3</p>
-            </div>
-            <div className="col">
-              <p>Most people had {this.state.average4} answers for Question 4</p>
+            <div className="container">
+              <div className="row">
+                <div className="col">
+                  <p>Most people had {this.state.average1} answers for Question 1</p>
+                </div>
+                <div className="col">
+                  <p>Most people had {this.state.average2} answers for Question 2</p>
+                </div>
+                <div className="col">
+                  <p>Most people had {this.state.average3} answers for Question 3</p>
+                </div>
+                <div className="col">
+                  <p>Most people had {this.state.average4} answers for Question 4</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -311,17 +358,21 @@ class App extends Component {
     };
     let started = (
       <div className="App">
-        {this.state.clicked ? <Timer minutes={this.state.minutes} seconds={this.state.seconds} startMinutes="2" milliseconds={this.state.milliseconds}/> : <p></p>}
-        <p></p>
-          {!this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.clicked.bind(this)}>{this.state.buttonName}</button> : <p></p>}
-          {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button> : <p></p>}
+      {this.state.clicked ? <Timer minutes={this.state.minutes} seconds={this.state.seconds} startMinutes="2" milliseconds={this.state.milliseconds}/> : <span></span>}
+        <div className="container-fluid add">
+        <div className="jumbotron">
           <p></p>
-          <br/>
-          <div className="container">
-            {this.state.clicked ? form : <p></p>}
-          </div>
-          <div className="container" style={listStyle}>
-            {listItems}
+            {!this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.clicked.bind(this)}>{this.state.buttonName}</button> : <span></span>}
+            {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button> : <span></span>}
+            <p></p>
+            <br/>
+            <div className="container">
+              {this.state.clicked ? form : <p></p>}
+            </div>
+            <div className="container" style={listStyle}>
+              {listItems}
+              </div>
+            </div>
           </div>
       </div>
     );

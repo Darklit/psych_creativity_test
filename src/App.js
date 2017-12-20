@@ -2,6 +2,11 @@ import React, { Component } from 'react';
 import './App.css';
 import Timer from './Components/timer.js';
 import Ths from 'thesaurus';
+import * as firebase from 'firebase';
+import config from './config.js';
+
+console.log(config);
+var app = firebase.initializeApp(config);
 
 class App extends Component {
   constructor(props){
@@ -11,13 +16,7 @@ class App extends Component {
       1: ["empty"],
       2: ["empty"],
       3: ["empty"],
-      4: ["empty"],
-      5: ["empty"],
-      6: ["empty"],
-      7: ["empty"],
-      8: ["empty"],
-      9: ["empty"],
-      10: ["empty"]
+      4: ["empty"]
     };
     this.state = {
       buttonName: "Click to start.",
@@ -28,7 +27,8 @@ class App extends Component {
       answers: details,
       answerIndex: 0,
       drawing: 0,
-      answers2: 0
+      answers2: 0,
+      milliseconds: 0
     }
     //this.clicked = this.clicked.bind(this);
     this.handleTime = this.handleTime.bind(this);
@@ -47,8 +47,14 @@ class App extends Component {
   handleTime(){
   let timer = setInterval(()=>{
       this.setState({
-        seconds: this.state.seconds-1
+        milliseconds: this.state.milliseconds-50
       });
+      if(this.state.milliseconds<=0){
+        this.setState({
+          seconds: this.state.seconds-1,
+          milliseconds: 1000
+        });
+      }
       if(this.state.seconds < 0){
         this.setState({
           seconds: 59,
@@ -62,31 +68,37 @@ class App extends Component {
             clicked: false,
             drawing: 2
           });
+          app.database().ref('/answers').set(this.state.answers)
+          .then(function(){
+            console.log("Worked!");
+          }).catch(console.error);
         }else{
           this.setState({
             answerIndex: this.state.answerIndex+1,
-            minutes: 1,
+            minutes: 2,
             seconds: 0
           });
         }
       }
-    },1000);
+    },50);
   }
   clicked(){
     if(!this.state.clicked){
       this.setState({
         buttonName: "Click to stop.",
         clicked: true,
-        minutes: 1,
-        seconds: 0
+        minutes: 2,
+        seconds: 0,
+        milliseconds: 0
       });
       this.handleTime();
     }else{
       this.setState({
         buttonName: "Click to start.",
         clicked: false,
-        minutes: 1,
-        seconds: 0
+        minutes: 2,
+        seconds: 0,
+        milliseconds: 0
       });
     }
   }
@@ -138,7 +150,8 @@ class App extends Component {
 
   skipMinute(){
     this.setState({
-      seconds: 0
+      seconds: 0,
+      minutes: 0
     });
   }
 
@@ -147,7 +160,7 @@ class App extends Component {
         <div className="App" id="startUp">
           <div className="container" id="page-wrap">
             <h1>Welcome!</h1>
-            <h5>This is the psychology creativity test! It works likes this: You have 2 minutes to come up with as many uses as you can for an abstract Object. It will cycle through 8 different objects then we will tell you your percentile against those who also took it!</h5>
+            <h5>This is the psychology creativity test! It works likes this: You have 2 minutes to come up with as many uses as you can for an abstract Object. It will cycle through 4 different objects then we will tell you your percentile against those who also took it!</h5>
             <button type="button" className="btn btn-warning" onClick={this.clicked2.bind(this)}>Click to begin</button>
           </div>
         </div>
@@ -155,7 +168,7 @@ class App extends Component {
 
     let answersArray = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
 
-    const listItems = answersArray.map((answer) => {
+    const listItems = answersArray.map((answer,i) => {
       if(answer !== "empty") return(<li>{answer}</li>);
     });
 
@@ -219,21 +232,19 @@ class App extends Component {
         <div className="container">
           <div className="row">
             {drawAns1}
-          </div>
-          <div className="row">
             {drawAns2}
-          </div>
-          <div className="row">
-            {drawAns3}
           </div>
         </div>
         <h4>Your total amount of answers: {answerNum}</h4>
       </div>
     );
 
+    let listStyle = {
+      width: "100"
+    };
     let started = (
       <div className="App">
-        {this.state.clicked ? <Timer minutes={this.state.minutes} seconds={this.state.seconds} startMinutes="1" /> : <p></p>}
+        {this.state.clicked ? <Timer minutes={this.state.minutes} seconds={this.state.seconds} startMinutes="2" milliseconds={this.state.milliseconds}/> : <p></p>}
         <p></p>
           {!this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.clicked.bind(this)}>{this.state.buttonName}</button> : <p></p>}
           {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button> : <p></p>}
@@ -242,9 +253,9 @@ class App extends Component {
           <div className="container">
             {this.state.clicked ? form : <p></p>}
           </div>
-          <ol>
+          <div className="container" style={listStyle}>
             {listItems}
-          </ol>
+          </div>
       </div>
     );
     if(this.state.drawing === 0) return startUp;

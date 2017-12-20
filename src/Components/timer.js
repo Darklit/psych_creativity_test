@@ -19,7 +19,7 @@ class Timer extends Component {
         fill: "#353535"
       };
       return(
-        <svg width={d} height="40" viewbox="0 0 {d} 40">
+        <svg width={d} height="40">
           <rect width={(currentTime/totalTime)*(d)} height="40" style={rectStyle}/>
         </svg>
       );

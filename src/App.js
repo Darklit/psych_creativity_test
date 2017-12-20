@@ -6,8 +6,15 @@ import * as firebase from 'firebase';
 import config from './config.js';
 import plural from 'pluralize';
 import fs from 'fs';
+import englishDic from 'dictionary-en-us';
 
 firebase.initializeApp(config);
+
+var enUS = require('dictionary-en-us');
+
+englishDic(function (err, result) {
+  console.log(err || result);
+});
 
 var database = firebase.database();
 class App extends Component {
@@ -40,6 +47,7 @@ class App extends Component {
     this.listenData = this.listenData.bind(this);
     this.checkPlural = this.checkPlural.bind(this);
     this.checkReal = this.checkReal.bind(this);
+    this.clicked = this.clicked.bind(this);
   }
 
   static defaultProps = {
@@ -113,7 +121,8 @@ class App extends Component {
   }
 
   clicked2(){
-    this.setState({drawing: 1});
+    this.setState({drawing: 1, clicked: true});
+    this.clicked();
   }
 
   checkSynonyms(answer){
@@ -151,7 +160,22 @@ class App extends Component {
     }
     */
     //Broken, need new library :(
-    return true;
+    let words = [];
+    englishDic((err,result) => {
+      words = result.dic.toString().split("\n");
+    });
+    if(words[0] !== undefined){
+      for(var i = 0; i < words.length; i++){
+        if(words[i].toLowerCase().includes(answer)){
+          let newWord = "";
+          for(var g = 0; g < words[i].length; g++){
+            if(words[i].charAt(g) == "/") newWord = words[i].substring(0,g);
+          }
+          if(answer.toLowerCase() == newWord.toLowerCase()) return true;
+        }
+      }
+    }
+    return false;
   }
 
   checkPlural(answer){
@@ -308,9 +332,9 @@ class App extends Component {
 
 
     let form = (
-      <form onSubmit={this.handleAnswer.bind(this)} autocomplete="off">
+      <form onSubmit={this.handleAnswer.bind(this)} autoComplete="off">
+      <h2>What can you use this for?</h2>
       <div className="row">
-        <h2>What can you use this for?</h2>
         <div className="col-sm">
         <label htmlFor="examples">{this.props.questions[this.state.answerIndex]}</label>
           <input ref="example" type="text" id="examples" className="form-control" onSubmit={this.handleAnswer.bind(this)}/>
@@ -362,13 +386,13 @@ class App extends Component {
         <div className="container-fluid add">
         <div className="jumbotron">
           <p></p>
-            {!this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.clicked.bind(this)}>{this.state.buttonName}</button> : <span></span>}
-            {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button> : <span></span>}
+            {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Next</button> : <span></span>}
             <p></p>
             <br/>
             <div className="container">
-              {this.state.clicked ? form : <p></p>}
+              {this.state.clicked ? form : <span></span>}
             </div>
+            <br/>
             <div className="container" style={listStyle}>
               {listItems}
               </div>

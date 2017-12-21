@@ -7,15 +7,14 @@ import config from './config.js';
 import plural from 'pluralize';
 import fs from 'fs';
 import englishDic from 'dictionary-en-us';
+import path from 'path';
+
+
 
 firebase.initializeApp(config);
-
-var enUS = require('dictionary-en-us');
-
-englishDic(function (err, result) {
-  console.log(err || result);
+firebase.auth().signInAnonymously().catch(function(err){
+  console.log(err.message);
 });
-
 var database = firebase.database();
 class App extends Component {
   constructor(props){
@@ -56,6 +55,12 @@ class App extends Component {
         (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="30%" height="30%" alt="Image 2"/>),
         (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="30%" height="30%" alt="Image 3"/>),
         (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="30%" height="30%" alt="Image 4"/>)
+      ],
+      questions2: [
+        (<img src="http://freevector.co/wp-content/uploads/2009/06/29942-triangular-silhouette-shapes.png" width="50%" height="50%" alt="Image 1"/>),
+        (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="50%" height="50%" alt="Image 2"/>),
+        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="50%" height="50%" alt="Image 3"/>),
+        (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="50%" height="50%" alt="Image 4"/>)
       ]
   }
   handleTime(){
@@ -160,22 +165,11 @@ class App extends Component {
     }
     */
     //Broken, need new library :(
-    let words = [];
-    englishDic((err,result) => {
-      words = result.dic.toString().split("\n");
-    });
-    if(words[0] !== undefined){
-      for(var i = 0; i < words.length; i++){
-        if(words[i].toLowerCase().includes(answer)){
-          let newWord = "";
-          for(var g = 0; g < words[i].length; g++){
-            if(words[i].charAt(g) == "/") newWord = words[i].substring(0,g);
-          }
-          if(answer.toLowerCase() == newWord.toLowerCase()) return true;
-        }
-      }
-    }
-    return false;
+    return true;
+  }
+
+  toXamplr(){
+    window.location.href = 'http://www.xamplr.com';
   }
 
   checkPlural(answer){
@@ -217,9 +211,14 @@ class App extends Component {
   }
 
   skipMinute(){
+    let test = "oof ouch owie my bones hurt very much ouch ouch ouch please stop the pain my bones are hurting too much ouch owie oof ouch owie";
+    let testArr = test.split(" ");
+    let ans = this.state.answers;
+    ans[this.state.answerIndex] = testArr;
     this.setState({
       seconds: 0,
-      minutes: 0
+      minutes: 0,
+      answers: ans
     });
   }
 
@@ -287,8 +286,16 @@ class App extends Component {
     });
 
     let questionArray = this.props.questions;
+    let question2Array = this.props.questions2;
     let allAnswers = [];
 
+    let questionImgs = question2Array.map((q,i) => {
+      return(
+        <div className="col">
+          {q}
+        </div>
+      );
+    });
 
     for(var i = 0; i < questionArray.length; i++){
       allAnswers[i] = this.state.answers[Object.keys(this.state.answers)[i]].map((answer) => {
@@ -297,26 +304,11 @@ class App extends Component {
     }
 
     let drawAns1 = allAnswers.map((answer,i) => {
-      if(i<=2)return(<div className="col">
-          {this.props.questions[i]}
-          {answer}
-        </div>
-      );
-    });
-
-    let drawAns2 = allAnswers.map((answer,i) => {
-      if(i<=5 && i>2)return(<div className="col">
-          {this.props.questions[i]}
-          {answer}
-        </div>
-      );
-    });
-
-    let drawAns3 = allAnswers.map((answer,i) => {
-      if(i>5)return(
-        <div className="col-sm">
-          {this.props.questions[i]}
-          {answer}
+      if(i<=4)return(
+        <div className="col">
+          <ul>
+            {answer}
+          </ul>
         </div>
       );
     });
@@ -348,30 +340,37 @@ class App extends Component {
         <div className="container-fluid add">
           <div className="jumbotron">
             <div className="container">
+              <h1>Your guesses!</h1>
               <div className="row">
-              <h2>Your guesses!</h2>
-                {drawAns1}
-                {drawAns2}
+                {questionImgs}
               </div>
-              <h2>The average total answers for people was {this.state.averageTotal}. You had {answerNum} total answers!</h2>
-              <br/>
-            </div>
+                <div className="row">
+                  {drawAns1}
+                </div>
+              </div>
+          </div>
+        </div>
+        <div className="container-fluid add">
+          <div className="jumbotron">
             <div className="container">
+            <h3>The average total answers for people was {Math.round(this.state.averageTotal)}. You had {answerNum} total answers!</h3>
+            <br/>
               <div className="row">
                 <div className="col">
-                  <p>Most people had {this.state.average1} answers for Question 1</p>
+                  <p>Most people had {Math.round(this.state.average1)} answers for Question 1</p>
                 </div>
                 <div className="col">
-                  <p>Most people had {this.state.average2} answers for Question 2</p>
+                  <p>Most people had {Math.round(this.state.average2)} answers for Question 2</p>
                 </div>
                 <div className="col">
-                  <p>Most people had {this.state.average3} answers for Question 3</p>
+                  <p>Most people had {Math.round(this.state.average3)} answers for Question 3</p>
                 </div>
                 <div className="col">
-                  <p>Most people had {this.state.average4} answers for Question 4</p>
+                  <p>Most people had {Math.round(this.state.average4)} answers for Question 4</p>
                 </div>
               </div>
             </div>
+              <button type="button" className="btn btn-primary" onClick={this.toXamplr.bind(this)}>Back to Xamplr</button>
           </div>
         </div>
       </div>

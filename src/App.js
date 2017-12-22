@@ -8,13 +8,11 @@ import plural from 'pluralize';
 import fs from 'fs';
 import englishDic from 'dictionary-en-us';
 import path from 'path';
+import Answers from './Components/answers.js';
 
 
 
 firebase.initializeApp(config);
-firebase.auth().signInAnonymously().catch(function(err){
-  console.log(err.message);
-});
 var database = firebase.database();
 class App extends Component {
   constructor(props){
@@ -36,7 +34,8 @@ class App extends Component {
       answerIndex: 0,
       drawing: 0,
       answers2: 0,
-      milliseconds: 0
+      milliseconds: 0,
+      signedIn: false
     }
     //this.clicked = this.clicked.bind(this);
     this.handleTime = this.handleTime.bind(this);
@@ -47,20 +46,21 @@ class App extends Component {
     this.checkPlural = this.checkPlural.bind(this);
     this.checkReal = this.checkReal.bind(this);
     this.clicked = this.clicked.bind(this);
+    this.checkVague = this.checkVague.bind(this);
   }
 
   static defaultProps = {
       questions: [
-        (<img src="http://freevector.co/wp-content/uploads/2009/06/29942-triangular-silhouette-shapes.png" width="30%" height="30%" alt="Image 1"/>),
-        (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="30%" height="30%" alt="Image 2"/>),
-        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="30%" height="30%" alt="Image 3"/>),
-        (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="30%" height="30%" alt="Image 4"/>)
+        (<img src={require('./imgs/image1.jpeg')} className="rotate" width="30%" height="30%" alt="Image 1"/>),
+        (<img src={require('./imgs/image2.jpeg')} className="rotate" width="30%" height="30%" alt="Image 2"/>),
+        (<img src={require('./imgs/image3.jpeg')} className="rotate" width="30%" height="30%" alt="Image 3"/>),
+        (<img src={require('./imgs/image4.JPG')} width="30%" height="30%" alt="Image 4"/>)
       ],
       questions2: [
-        (<img src="http://freevector.co/wp-content/uploads/2009/06/29942-triangular-silhouette-shapes.png" width="50%" height="50%" alt="Image 1"/>),
-        (<img src="http://freevector.co/wp-content/uploads/2009/05/32263-explosion-variant-with-silhouettes-and-shapes.png" width="50%" height="50%" alt="Image 2"/>),
-        (<img src="https://www.shareicon.net/download/2015/12/04/682209_line.svg" width="50%" height="50%" alt="Image 3"/>),
-        (<img src="http://bryanbeus.com/wp-content/uploads/2014/10/001-007-Emotion-Shapes-5.jpg" width="50%" height="50%" alt="Image 4"/>)
+        (<img src={require('./imgs/image1.jpeg')} className="rotate" width="70%" height="70%" alt="Image 1"/>),
+        (<img src={require('./imgs/image2.jpeg')} className="rotate" width="70%" height="70%" alt="Image 2"/>),
+        (<img src={require('./imgs/image3.jpeg')} className="rotate" width="70%" height="70%" alt="Image 3"/>),
+        (<img src={require('./imgs/image4.JPG')} width="70%" height="70%" alt="Image 4"/>)
       ]
   }
   handleTime(){
@@ -127,6 +127,9 @@ class App extends Component {
 
   clicked2(){
     this.setState({drawing: 1, clicked: true});
+    firebase.auth().signInAnonymously().catch(function(err){
+      console.log(err.message);
+    });
     this.clicked();
   }
 
@@ -165,6 +168,38 @@ class App extends Component {
     }
     */
     //Broken, need new library :(
+    return new Promise((fulfill,reject)=> {
+      let bannedWords = firebase.database().ref('deleted');
+      bannedWords.once('value',).then((dat)=>{
+        let data = dat.val();
+        let keys = Object.keys(data);
+        for(var i = 0; i < keys.length; i++){
+          if(data[keys[i]].toLowerCase() == answer.toLowerCase()) fulfill(false);
+        }
+        fulfill(true);
+      });
+    });
+
+    return true;
+  }
+
+  checkVague(answer){
+    const vagueAnswers = [
+      "stuff",
+      "things",
+      "thing",
+      "object",
+      "rectangle",
+      "square",
+      "circle",
+    ];
+
+    let ansArr = answer.toLowerCase().split(" ");
+    for(var i = 0; i < ansArr.length; i++){
+      for(var g = 0; g < vagueAnswers.length; g++){
+        if(ansArr[i].toLowerCase() == vagueAnswers[g]) return false;
+      }
+    }
     return true;
   }
 
@@ -193,15 +228,20 @@ class App extends Component {
     let answers = this.state.answers;
     for(var i = 0; i < Object.keys(answers).length; i++){
       if(i == this.state.answerIndex){
-        if(this.checkReal(data)){
+        if(this.checkVague(data)){
         if(this.checkSynonyms(data) && this.checkDuplicates(data) && this.checkPlural(data)){
-            answers[Object.keys(answers)[i]][this.state.answers2] = data;
+          let num = i;
+          let test = this;
+            this.checkReal(data).then((res)=>{
+              if(res) answers[Object.keys(answers)[num]][test.state.answers2] = data;
+              else alert("Sorry! You can't use that answer.");
+              this.setState({
+                answers2: this.state.answers2+1
+              });
+            }).catch(console.error);
           }
           else alert("Too similar to one of your other answers!");
-        }else alert("These words do not exist :(");
-        this.setState({
-          answers2: this.state.answers2+1
-        });
+        }else alert("Too vague!");
         this.refs.example.value = "";
       }
     }
@@ -211,14 +251,29 @@ class App extends Component {
   }
 
   skipMinute(){
-    let test = "oof ouch owie my bones hurt very much ouch ouch ouch please stop the pain my bones are hurting too much ouch owie oof ouch owie";
-    let testArr = test.split(" ");
-    let ans = this.state.answers;
-    ans[this.state.answerIndex] = testArr;
     this.setState({
       seconds: 0,
-      minutes: 0,
-      answers: ans
+      minutes: 0
+    });
+  }
+
+  signInEmail(input){
+    input.preventDefault();
+    console.log("here!!");
+    let worked = false;
+    firebase.auth().signInWithEmailAndPassword(this.refs.email.value,this.refs.pass.value).then((res)=>{
+      this.setState({
+      signedIn: true,
+      drawing: 3
+    });
+    }).catch(e => {this.setState({
+      signedIn: false,
+      drawing: 3
+    }); console.log(e); alert("Wrong email/password!");});
+    this.setState({
+      email: this.refs.email.value,
+      pass: this.refs.pass.value,
+      drawing: 4
     });
   }
 
@@ -233,6 +288,22 @@ class App extends Component {
         answersArr[i] = ans[key[i]];
       }
       this.handleAverage(answersArr);
+    });
+  }
+
+  clicked4(){
+    this.setState({
+      drawing: 3
+    });
+  }
+
+  backToStart(){
+    firebase.auth().signOut();
+    this.setState({
+      drawing: 0,
+      signedIn: false,
+      email: "",
+      pass: ""
     });
   }
 
@@ -272,12 +343,16 @@ class App extends Component {
         <div className="container-fluid add">
           <div className="jumbotron">
             <h1>Welcome!</h1>
-            <h5>This is the psychology creativity test! It works likes this: You have 2 minutes to come up with as many uses as you can for an abstract Object. It will cycle through 4 different objects then we will tell you your percentile against those who also took it!</h5>
+            <h5>This is Perdue's Creativity Test! It works likes this: You have 2 minutes to come up with as many possible uses as you can for an Abstract Object. It will cycle through 4 different objects then it'll tell you your percentile against those who also took it!</h5>
             <button type="button" className="btn btn-warning" onClick={this.clicked2.bind(this)}>Click to begin</button>
+            <span></span>
+
           </div>
         </div>
       </div>
     );
+
+    //<button type="button" className="btn btn-primary" onClick={this.clicked4.bind(this)}>Teacher tools</button>
 
     let answersArray = this.state.answers[Object.keys(this.state.answers)[this.state.answerIndex]];
 
@@ -325,14 +400,43 @@ class App extends Component {
 
     let form = (
       <form onSubmit={this.handleAnswer.bind(this)} autoComplete="off">
-      <h2>What can you use this for?</h2>
+      <h2>What are the possible uses for this object?</h2>
+      <br/>
       <div className="row">
         <div className="col-sm">
         <label htmlFor="examples">{this.props.questions[this.state.answerIndex]}</label>
           <input ref="example" type="text" id="examples" className="form-control" onSubmit={this.handleAnswer.bind(this)}/>
+          <button type="submit" className="btn btn-primary">Submit</button>
         </div>
       </div>
     </form>
+  );
+
+  let signIn = (
+    <form onSubmit={this.signInEmail.bind(this)}>
+        <div className="row">
+          <label htmlFor="email">Email address: </label>
+            <input ref="email" type="email" id="email" className="form-control" onSubmit={this.signInEmail.bind(this)}/>
+        </div>
+        <div className="row">
+          <label htmlFor="pass">Password: </label>
+            <input ref="pass" type="password" id="pass" className="form-control" onSubmit={this.signInEmail.bind(this)}/>
+        </div>
+        <button type="submit" className="btn btn-primary">Submit</button>
+    </form>
+  );
+
+  let teacherTools = (
+    <div className="App">
+      <div className="container-fluid add">
+        <div className="jumbotron">
+        <button type="button" className="btn btn-primary" onClick={this.backToStart.bind(this)}>Back</button>
+          <div className="container">
+          {this.state.signedIn ? <Answers email={this.state.email} pass={this.state.pass}/> : signIn }
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
     let ending = (
@@ -379,14 +483,24 @@ class App extends Component {
     let listStyle = {
       width: "100"
     };
+
+    let loading = (
+      <div className="App">
+        <div className="container-fluid add">
+          <div className="jumbotron">
+              <img src={require('./loading.gif')}/>
+          </div>
+        </div>
+      </div>
+    );
     let started = (
       <div className="App">
       {this.state.clicked ? <Timer minutes={this.state.minutes} seconds={this.state.seconds} startMinutes="2" milliseconds={this.state.milliseconds}/> : <span></span>}
         <div className="container-fluid add">
         <div className="jumbotron">
           <p></p>
-            {this.state.clicked ? <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Next</button> : <span></span>}
             <p></p>
+            <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button>
             <br/>
             <div className="container">
               {this.state.clicked ? form : <span></span>}
@@ -402,6 +516,8 @@ class App extends Component {
     if(this.state.drawing === 0) return startUp;
     else if(this.state.drawing === 1) return started;
     else if(this.state.drawing === 2) return ending;
+    else if(this.state.drawing === 3) return teacherTools;
+    else if(this.state.drawing === 4) return loading;
     else return(<div>Error!</div>);
   }
 

@@ -16,7 +16,7 @@ class Timer extends Component {
       currentTime+=(milli);
       let d = document.documentElement.clientWidth;
       const rectStyle = {
-        fill: "#353535"
+        fill: "#5cb85c"
       };
       return(
         <svg width={d} height="40">

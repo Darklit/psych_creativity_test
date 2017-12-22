@@ -8,7 +8,7 @@
 }
 
 .add {
-  background-color: #353535;
+  background-color: #6acdf4;
 }
 
 .App {
@@ -35,4 +35,25 @@ body {
 
 .col {
   width: 100%;
+}
+
+.signOut {
+  text-align: left;
+}
+
+.btn {
+  margin-left: 3px;
+  margin-right: 3px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.rotate {
+   -webkit-transform: rotate(180deg);
+}
+img {
+  margin-top: 3px;
+  margin-bottom: 3px;
+  border-color: #feb825;
+  border: 1px solid #5cb85c;
 }

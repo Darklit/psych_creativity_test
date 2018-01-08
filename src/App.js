@@ -10,9 +10,9 @@ import englishDic from 'dictionary-en-us';
 import path from 'path';
 import Answers from './Components/answers.js';
 
-
-
 firebase.initializeApp(config);
+
+
 var database = firebase.database();
 class App extends Component {
   constructor(props){
@@ -51,10 +51,10 @@ class App extends Component {
 
   static defaultProps = {
       questions: [
-        (<img src={require('./imgs/image1.jpeg')} className="rotate" width="30%" height="30%" alt="Image 1"/>),
-        (<img src={require('./imgs/image2.jpeg')} className="rotate" width="30%" height="30%" alt="Image 2"/>),
-        (<img src={require('./imgs/image3.jpeg')} className="rotate" width="30%" height="30%" alt="Image 3"/>),
-        (<img src={require('./imgs/image4.JPG')} width="30%" height="30%" alt="Image 4"/>)
+        (<img src={require('./imgs/image1.jpeg')} className="rotate" width="70%" height="70%" alt="Image 1"/>),
+        (<img src={require('./imgs/image2.jpeg')} className="rotate" width="70%" height="70%" alt="Image 2"/>),
+        (<img src={require('./imgs/image3.jpeg')} className="rotate" width="70%" height="70%" alt="Image 3"/>),
+        (<img src={require('./imgs/image4.JPG')} width="70%" height="70%" alt="Image 4"/>)
       ],
       questions2: [
         (<img src={require('./imgs/image1.jpeg')} className="rotate" width="70%" height="70%" alt="Image 1"/>),
@@ -500,7 +500,6 @@ class App extends Component {
         <div className="jumbotron">
           <p></p>
             <p></p>
-            <button type="button" className="btn btn-primary" onClick={this.skipMinute.bind(this)}>Skip</button>
             <br/>
             <div className="container">
               {this.state.clicked ? form : <span></span>}

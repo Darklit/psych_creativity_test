@@ -41,6 +41,10 @@ body {
   text-align: left;
 }
 
+.noSelect {
+  -webkit-user-select: none;
+}
+
 .btn {
   margin-left: 3px;
   margin-right: 3px;

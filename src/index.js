@@ -8,12 +8,14 @@ import registerServiceWorker from './registerServiceWorker';
 import PsychTest2 from './Components/PsychTest2';
 import * as firebase from 'firebase';
 import config from './config';
+import Test from './Components/testing';
 
 ReactDOM.render(
   <BrowserRouter>
     <div>
       <Route exact path="/" component={App}/>
-      <Route path="/test" component={PsychTest2}/>
+      <Route path="/memory" component={PsychTest2}/>
+      <Route path="/test" component={Test}/>
     </div>
   </BrowserRouter>,document.getElementById('root'));
 registerServiceWorker();

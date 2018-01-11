@@ -16,7 +16,9 @@ class PsychTest2 extends Component {
       stage1: true,
       answerCirs: {},
       ending: false,
-      correctAll: []
+      correctAll: [],
+      userClick: 0,
+      fillAmount: []
     };
 
     this.beginTest = this.beginTest.bind(this);
@@ -30,6 +32,7 @@ class PsychTest2 extends Component {
     var col = 4;
     var row = 4;
     var filledCircles = 0;
+    let tempUser = [];
     for(var i = 0; i < 5; i++){
       col++;
       row++;
@@ -61,12 +64,14 @@ class PsychTest2 extends Component {
           curRow = 0;
         }else curRow++;
       }
+      tempUser[i] = filledCircles;
       filledCircles = 0;
     }
     this.setState({
       testCirs: test,
       answerCirs: test2,
-      currentQuestion: 0
+      currentQuestion: 0,
+      fillAmount: tempUser
     });
     console.log(test);
     this.handleTime();
@@ -103,7 +108,17 @@ class PsychTest2 extends Component {
   handleClick(id){
     let num = id.target.id;
     let cir = this.state.answerCirs;
-    cir[this.state.currentQuestion][num].fill = !cir[this.state.currentQuestion][num].fill;
+    let currentFill = 0;
+    for(let i = 0; i < cir[this.state.currentQuestion].length; i++){
+      if(cir[this.state.currentQuestion][i].fill) currentFill++;
+    }
+    if(!cir[this.state.currentQuestion][num].fill && currentFill+1 <= this.state.fillAmount[this.state.currentQuestion]){
+      cir[this.state.currentQuestion][num].fill = true;
+    }else if(currentFill+1 > this.state.fillAmount[this.state.currentQuestion] && !cir[this.state.currentQuestion][num].fill){
+      alert(`There are only ${this.state.fillAmount[this.state.currentQuestion]} circles on the grid!`);
+    }else if(cir[this.state.currentQuestion][num].fill){
+      cir[this.state.currentQuestion][num].fill = false;
+    }
     if(cir[this.state.currentQuestion][num].fill) cir[this.state.currentQuestion][num].clicked = true;
     else cir[this.state.currentQuestion][num].clicked = false;
     this.setState({
@@ -124,15 +139,19 @@ class PsychTest2 extends Component {
     }
     console.log(`Total filled is ${totalFilled}`);
     for(var i = 0; i < total; i++){
-      if(this.state.answerCirs[this.state.currentQuestion][i].fill == this.state.testCirs[this.state.currentQuestion][i].fill){
+      if(this.state.answerCirs[this.state.currentQuestion][i].fill && this.state.testCirs[this.state.currentQuestion][i].fill){
         correct++;
-      }else if(this.state.answerCirs[this.state.currentQuestion][i].fill) wrong++;
-      else if(this.state.testCirs[this.state.currentQuestion][i].fill) missed++;
+      }else if(this.state.answerCirs[this.state.currentQuestion][i].fill){ wrong++;
+      }else if(this.state.testCirs[this.state.currentQuestion][i].fill){ missed++;
+      } else {
+        console.log(`fill: ${this.state.answerCirs[this.state.currentQuestion][i]} testcirs: ${this.state.testCirs[this.state.currentQuestion][i]}`);
+      }
     }
     let c = this.state.correctAll;
-    c[this.state.currentQuestion] = Math.round((correct/total)*100);
+    c[this.state.currentQuestion] = Math.round((correct/totalFilled)*100);
+    console.log(c[this.state.currentQuestion]);
     this.setState({
-      correctPercentage: (correct/total),
+      correctPercentage: (correct/totalFilled),
       stage3: true,
       stage2: false,
       missed: missed,
@@ -270,7 +289,7 @@ class PsychTest2 extends Component {
           </div>
         </div>
       </div>
-    )
+    );
 
     let review = (
       <div className="App">

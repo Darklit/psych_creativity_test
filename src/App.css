@@ -61,3 +61,12 @@ img {
   border-color: #feb825;
   border: 1px solid #5cb85c;
 }
+
+.whatever {
+  margin: 0 auto;
+}
+
+td {
+  padding-left: 5px;
+  padding-right: 5px;
+}
